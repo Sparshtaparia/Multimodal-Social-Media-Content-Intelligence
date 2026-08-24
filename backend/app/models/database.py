@@ -47,22 +47,31 @@ class MetadataProfile(Base):
     __tablename__ = "metadata_profiles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, unique=True)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), unique=True)
+    
     language = Column(String)
     content_type = Column(String)
+    
+    # Linguistic
     word_count = Column(Integer)
     character_count = Column(Integer)
     sentence_count = Column(Integer)
-    hashtag_count = Column(Integer)
-    mention_count = Column(Integer)
-    url_count = Column(Integer)
-    emoji_count = Column(Integer)
-    text_block_count = Column(Integer)
-    image_block_count = Column(Integer)
-    text_area_ratio = Column(Float)
-    image_area_ratio = Column(Float)
-    readability_score = Column(Float)
-    sentiment_score = Column(Float)
+    
+    # Heuristic counts
+    hashtag_count = Column(Integer, default=0)
+    mention_count = Column(Integer, default=0)
+    url_count = Column(Integer, default=0)
+    emoji_count = Column(Integer, default=0)
+    
+    # Layout
+    text_block_count = Column(Integer, default=0)
+    image_block_count = Column(Integer, default=0)
+    text_area_ratio = Column(Float, default=0.0)
+    image_area_ratio = Column(Float, default=0.0)
+    
+    # Scores
+    readability_score = Column(Float, default=0.0)
+    sentiment_score = Column(Float, default=0.0)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     document = relationship("Document", back_populates="metadata_profile")
@@ -114,3 +123,24 @@ class ProcessingRun(Base):
     completed_at = Column(DateTime(timezone=True))
 
     document = relationship("Document", back_populates="processing_runs")
+
+class EngagementScore(Base):
+    __tablename__ = "engagement_scores"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), unique=True)
+    
+    hook_score = Column(Float)
+    clarity_score = Column(Float)
+    specificity_score = Column(Float)
+    cta_score = Column(Float)
+    emotion_score = Column(Float)
+    interaction_score = Column(Float)
+    readability_score = Column(Float)
+    
+    overall_score = Column(Float)
+    scoring_version = Column(String, default="1.0")
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    document = relationship("Document", back_populates="engagement_score")
+

@@ -99,3 +99,31 @@ CREATE TABLE processing_runs (
 );
 
 CREATE INDEX idx_processing_runs_document_id ON processing_runs(document_id);
+
+-- Add layout fields to metadata_profiles
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS hashtag_count INTEGER DEFAULT 0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS mention_count INTEGER DEFAULT 0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS url_count INTEGER DEFAULT 0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS emoji_count INTEGER DEFAULT 0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS text_block_count INTEGER DEFAULT 0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS image_block_count INTEGER DEFAULT 0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS text_area_ratio FLOAT DEFAULT 0.0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS image_area_ratio FLOAT DEFAULT 0.0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS readability_score FLOAT DEFAULT 0.0;
+ALTER TABLE metadata_profiles ADD COLUMN IF NOT EXISTS sentiment_score FLOAT DEFAULT 0.0;
+
+-- Create engagement_scores table
+CREATE TABLE engagement_scores (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    hook_score FLOAT,
+    clarity_score FLOAT,
+    specificity_score FLOAT,
+    cta_score FLOAT,
+    emotion_score FLOAT,
+    interaction_score FLOAT,
+    readability_score FLOAT,
+    overall_score FLOAT,
+    scoring_version TEXT DEFAULT '1.0',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
