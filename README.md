@@ -26,6 +26,21 @@ Built as a full-stack product prototype with a **Next.js frontend**, **FastAPI b
 
 ---
 
+## Product Screenshots
+
+<div align="center">
+  <img src="frontend/public/Screenshot%202026-08-24%20132439.png" width="48%" />
+  <img src="frontend/public/Screenshot%202026-08-24%20132449.png" width="48%" />
+  <img src="frontend/public/Screenshot%202026-08-24%20132457.png" width="48%" />
+  <img src="frontend/public/Screenshot%202026-08-24%20132533.png" width="48%" />
+  <img src="frontend/public/Screenshot%202026-08-24%20132543.png" width="48%" />
+  <img src="frontend/public/Screenshot%202026-08-24%20132559.png" width="48%" />
+  <img src="frontend/public/Screenshot%202026-08-24%20132608.png" width="48%" />
+  <img src="frontend/public/Screenshot%202026-08-24%20132617.png" width="48%" />
+</div>
+
+---
+
 ## Problem Statement
 
 Marketers and content teams today rely on gut feeling or lagging indicators (likes, shares) to evaluate content quality. Existing platforms provide simple AI summaries, but they do not answer the critical pre-publishing question:
