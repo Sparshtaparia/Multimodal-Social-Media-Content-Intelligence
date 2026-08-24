@@ -14,18 +14,29 @@ def calculate_engagement_scores(metadata: Dict[str, Any], linguistic: Dict[str, 
     if blocks:
         text_blocks = [b for b in blocks if b['block_type'] == 'text']
         if text_blocks:
-            first_block = text_blocks[0]['text']
+            first_block_data = text_blocks[0]
+            first_block = first_block_data.get('text', '')
             first_sentence_length = len(first_block.split())
+            
+            block_provenance = {
+                "block_id": first_block_data.get("id"),
+                "page": first_block_data.get("page_number"),
+                "bbox": first_block_data.get("bbox"),
+                "source": first_block_data.get("source"),
+                "text": first_block
+            }
+            
             if "?" in first_block:
                 hook_score += 20
-                evidence.append({"signal": "question_in_hook", "value": first_block[:50], "impact": "positive"})
+                evidence.append({"signal": "question_in_hook", "value": first_block[:50], "impact": "positive", **block_provenance})
             
             if first_sentence_length > 0 and first_sentence_length <= 15:
                 hook_score += 15
-                evidence.append({"signal": "punchy_opening", "value": f"{first_sentence_length} words", "impact": "positive"})
+                evidence.append({"signal": "punchy_opening", "value": f"{first_sentence_length} words", "impact": "positive", **block_provenance})
             elif first_sentence_length > 25:
                 hook_score -= 10
-                evidence.append({"signal": "long_opening", "value": f"{first_sentence_length} words", "impact": "negative"})
+                evidence.append({"signal": "long_opening", "value": f"{first_sentence_length} words", "impact": "negative", **block_provenance})
+                
                 
     if visual.get("headline_detected"):
         hook_score += 15
@@ -36,24 +47,46 @@ def calculate_engagement_scores(metadata: Dict[str, Any], linguistic: Dict[str, 
     # --- 2. Specificity Score ---
     # Based on numbers, percentages, etc. (we can heuristically count digits in the text)
     specificity_score = 40.0
-    full_text = " ".join([b['text'] for b in blocks if b['block_type'] == 'text' and b['text']])
-    digit_count = sum(c.isdigit() for c in full_text)
+    full_text = ""
+    digit_count = 0
+    spec_block_prov = {}
+    for b in blocks:
+        if b['block_type'] == 'text' and b.get('text'):
+            full_text += b['text'] + " "
+            if any(c.isdigit() for c in b['text']):
+                digit_count += sum(c.isdigit() for c in b['text'])
+                if not spec_block_prov:
+                    spec_block_prov = {
+                        "block_id": b.get("id"), "page": b.get("page_number"),
+                        "bbox": b.get("bbox"), "source": b.get("source"), "text": b.get("text")
+                    }
+
     if digit_count > 0:
         specificity_score += min(digit_count * 5, 40)
-        evidence.append({"signal": "numerical_specificity", "value": f"{digit_count} digits detected", "impact": "positive"})
+        evidence.append({"signal": "numerical_specificity", "value": f"{digit_count} digits detected", "impact": "positive", **spec_block_prov})
     
     # Check for specific symbols
     if "%" in full_text or "$" in full_text:
         specificity_score += 20
-        evidence.append({"signal": "measurable_claims", "value": "Percentages or currency symbols detected", "impact": "positive"})
+        evidence.append({"signal": "measurable_claims", "value": "Percentages or currency symbols detected", "impact": "positive", **spec_block_prov})
         
-    specificity_score = max(0, min(100, specificity_score))
-
     # --- 3. CTA Score ---
     cta_score = 30.0
+    
+    # Find the block where CTA keywords are present
+    cta_block_prov = {}
     if metadata.get("content_type") == "Promotional": # We set this to true if CTA keywords were found in Phase 2
         cta_score += 50.0
-        evidence.append({"signal": "cta_keywords_detected", "impact": "positive"})
+        # Try to find a block with a CTA keyword
+        for b in blocks:
+            if b['block_type'] == 'text' and b.get('text'):
+                if any(kw in b['text'].lower() for kw in ["buy", "subscribe", "link in bio", "sign up", "learn more"]):
+                    cta_block_prov = {
+                        "block_id": b.get("id"), "page": b.get("page_number"),
+                        "bbox": b.get("bbox"), "source": b.get("source"), "text": b.get("text")
+                    }
+                    break
+        evidence.append({"signal": "cta_keywords_detected", "impact": "positive", **cta_block_prov})
     else:
         evidence.append({"signal": "missing_cta", "impact": "negative"})
         

@@ -44,7 +44,10 @@ def run_pipeline(temp_file_path: str, document_id: uuid.UUID):
         
         # Save blocks to DB
         for b in blocks:
+            b_id = uuid.uuid4()
+            b["id"] = str(b_id) # Assign ID early for provenance
             db_block = DocumentBlock(
+                id=b_id,
                 document_id=document.id,
                 page_number=b.get("page_number"),
                 block_type=b.get("block_type"),
@@ -54,6 +57,7 @@ def run_pipeline(temp_file_path: str, document_id: uuid.UUID):
                 source=b.get("source")
             )
             db.add(db_block)
+            
             
         # Update document with extraction metadata
         document.ocr_used = extraction_metadata.get("ocr_used", False)
@@ -114,7 +118,8 @@ def run_pipeline(temp_file_path: str, document_id: uuid.UUID):
             interaction_score=scores.get("interaction_score"),
             readability_score=scores.get("readability_score"),
             overall_score=scores.get("overall_score"),
-            scoring_version=scores.get("scoring_version")
+            scoring_version=scores.get("scoring_version"),
+            evidence=scores.get("evidence", [])
         )
         db.add(db_score)
         
@@ -151,7 +156,9 @@ def run_pipeline(temp_file_path: str, document_id: uuid.UUID):
                 source=rec["source"],
                 priority=rec["priority"],
                 problem=rec["problem"],
-                evidence=rec["evidence"],
+                evidence=rec.get("evidence_json", []), # We will update agents to output structured json evidence
+                evidence_block_id=rec.get("evidence_block_id"),
+                evidence_page=rec.get("evidence_page"),
                 recommendation=rec["recommendation"],
                 rewrite=rec.get("rewrite"),
                 confidence=rec["confidence"],

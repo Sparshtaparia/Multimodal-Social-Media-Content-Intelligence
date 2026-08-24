@@ -78,9 +78,10 @@ class MetadataProfile(Base):
 
 class EngagementScore(Base):
     __tablename__ = "engagement_scores"
-
+    
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, unique=True)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), unique=True)
+    
     hook_score = Column(Float)
     clarity_score = Column(Float)
     specificity_score = Column(Float)
@@ -89,7 +90,11 @@ class EngagementScore(Base):
     interaction_score = Column(Float)
     readability_score = Column(Float)
     overall_score = Column(Float)
-    scoring_version = Column(String)
+    scoring_version = Column(String, default="1.0")
+    
+    # Store evidence objects referencing DocumentBlocks
+    evidence = Column(JSONB)
+    
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     document = relationship("Document", back_populates="engagement_score")
@@ -99,14 +104,22 @@ class Recommendation(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False)
+    
     category = Column(String, nullable=False)
     source = Column(String, nullable=False)
+    priority = Column(String, nullable=False, default="medium")
     problem = Column(String)
-    evidence = Column(String)
-    recommendation_text = Column("recommendation", String, nullable=False)
+    
+    # JSON array of evidence items or single JSON object mapping to block UUID
+    evidence = Column(JSONB)
+    evidence_block_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"))
+    evidence_page = Column(Integer)
+    
+    recommendation = Column(String, nullable=False)
     rewrite = Column(String)
     confidence = Column(Float)
     supported = Column(Boolean)
+    
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     document = relationship("Document", back_populates="recommendations")
@@ -124,44 +137,5 @@ class ProcessingRun(Base):
 
     document = relationship("Document", back_populates="processing_runs")
 
-class EngagementScore(Base):
-    __tablename__ = "engagement_scores"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'), unique=True)
-    
-    hook_score = Column(Float)
-    clarity_score = Column(Float)
-    specificity_score = Column(Float)
-    cta_score = Column(Float)
-    emotion_score = Column(Float)
-    interaction_score = Column(Float)
-    readability_score = Column(Float)
-    
-    overall_score = Column(Float)
-    scoring_version = Column(String, default="1.0")
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
-    document = relationship("Document", back_populates="engagement_score")
-
-
-class Recommendation(Base):
-    __tablename__ = "recommendations"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'))
-    
-    category = Column(String, nullable=False)
-    source = Column(String, nullable=False)
-    priority = Column(String, nullable=False)
-    problem = Column(String, nullable=False)
-    evidence = Column(String, nullable=False)
-    recommendation = Column(String, nullable=False)
-    rewrite = Column(String)
-    confidence = Column(Float, nullable=False)
-    supported = Column(Boolean, nullable=False, default=True)
-    
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
-    
-    document = relationship("Document", back_populates="recommendations")
 

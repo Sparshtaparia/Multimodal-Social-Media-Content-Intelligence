@@ -1,4 +1,5 @@
 from typing import Dict, Any, List
+import re
 from app.llm.schemas import GeminiRecommendation
 
 def validate_gemini_recommendations(
@@ -40,6 +41,19 @@ def validate_gemini_recommendations(
             if not found_in_deterministic:
                 supported = False
                 
+        # Check 6 - Rewrite validation (Hallucinated facts/numbers)
+        if rec.rewrite:
+            # Find all numbers in the rewrite
+            rewrite_numbers = re.findall(r'\b\d+\b', rec.rewrite)
+            # Find all numbers in the source content
+            content_numbers = re.findall(r'\b\d+\b', content)
+            
+            # If the rewrite introduces a number not in the content (and not a generic "1" or "2" perhaps, but let's be strict for now)
+            for num in rewrite_numbers:
+                if num not in content_numbers:
+                    supported = False
+                    break
+                    
         validated.append({
             "category": rec.category,
             "source": "gemini",
