@@ -189,3 +189,28 @@ def get_analysis_status(analysis_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Analysis not found")
     
     return {"analysis_id": str(document.id), "status": document.status}
+
+@router.get("/analyses")
+def list_analyses(db: Session = Depends(get_db)):
+    documents = db.query(Document).order_by(Document.created_at.desc()).all()
+    
+    results = []
+    for doc in documents:
+        score = None
+        if doc.engagement_score:
+            score = doc.engagement_score.overall_score
+            
+        recs = len(doc.recommendations) if doc.recommendations else 0
+        
+        results.append({
+            "id": str(doc.id),
+            "filename": doc.filename,
+            "file_type": doc.file_type,
+            "status": doc.status,
+            "created_at": doc.created_at.isoformat() if doc.created_at else None,
+            "overall_score": score,
+            "recommendation_count": recs
+        })
+        
+    return {"analyses": results}
+
