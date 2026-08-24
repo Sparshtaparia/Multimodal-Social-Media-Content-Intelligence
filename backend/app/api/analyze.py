@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pathlib import Path
 
 from app.db.session import get_db
-from app.models.database import Document, ProcessingRun
+from app.models.database import Document, ProcessingRun, DocumentBlock
 from app.models.schemas import AnalyzeResponseSchema, DocumentResponseSchema
 from app.pipeline.orchestrator import run_pipeline
 
@@ -107,8 +107,20 @@ def get_analysis(analysis_id: uuid.UUID, db: Session = Depends(get_db)):
             "ocr_used": document.ocr_used,
             "extraction_method": document.extraction_method,
             "processing_time_ms": document.processing_time_ms
-        }
+        },
+        "extracted_blocks": []
     }
+    
+    blocks = db.query(DocumentBlock).filter(DocumentBlock.document_id == analysis_id).all()
+    for b in blocks:
+        result["extracted_blocks"].append({
+            "id": str(b.id),
+            "page_number": b.page_number,
+            "block_type": b.block_type,
+            "text": b.text,
+            "confidence": b.confidence,
+            "source": b.source
+        })
     
     if document.metadata_profile:
         mp = document.metadata_profile
