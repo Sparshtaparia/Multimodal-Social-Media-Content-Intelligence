@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getAnalysis } from '@/lib/api';
 import { AnalysisResult } from '@/lib/types';
 import { ProcessingTimeline } from '@/components/processing/ProcessingTimeline';
@@ -9,7 +9,8 @@ import { AlertCircle, FileX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function AnalysisPage({ params }: { params: { id: string } }) {
+export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
@@ -20,7 +21,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
 
     const fetchStatus = async () => {
       try {
-        const data = await getAnalysis(params.id);
+        const data = await getAnalysis(id);
         if (!isMounted) return;
         
         setAnalysis(data);
@@ -50,7 +51,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
       isMounted = false;
       clearInterval(pollInterval);
     };
-  }, [params.id]);
+  }, [id]);
 
   if (error) {
     return (

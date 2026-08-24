@@ -21,9 +21,9 @@ function StatGroup({ title, children }: { title: string, children: React.ReactNo
 
 function Stat({ label, value }: { label: string, value: string | number | undefined }) {
   return (
-    <div className="flex flex-col">
-      <span className="text-xs text-slate-500">{label}</span>
-      <span className="text-sm font-medium text-slate-900">{value !== undefined ? value : '-'}</span>
+    <div className="flex flex-col min-w-0">
+      <span className="text-xs text-slate-500 truncate">{label}</span>
+      <span className="text-sm font-medium text-slate-900 truncate" title={value?.toString()}>{value !== undefined ? value : '-'}</span>
     </div>
   );
 }

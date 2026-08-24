@@ -112,7 +112,7 @@ class Recommendation(Base):
     
     # JSON array of evidence items or single JSON object mapping to block UUID
     evidence = Column(JSONB)
-    evidence_block_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"))
+    evidence_block_id = Column(UUID(as_uuid=True), ForeignKey("document_blocks.id", ondelete="CASCADE"))
     evidence_page = Column(Integer)
     
     recommendation = Column(String, nullable=False)

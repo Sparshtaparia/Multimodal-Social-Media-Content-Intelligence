@@ -17,19 +17,20 @@ def test_visual_profile_bbox_area():
     assert vp["headline_detected"] is True  # Top 20% since y0=10 < 100
 
 def test_engagement_strong_cta_increases_cta_score():
-    blocks = [{"block_type": "text", "text": "This is a post."}]
+    blocks_no_cta = [{"block_type": "text", "text": "This is a post."}]
     scores_no_cta = calculate_engagement_scores(
         metadata={"content_type": "Informational"}, 
         linguistic={}, 
         visual={}, 
-        blocks=blocks
+        blocks=blocks_no_cta
     )
     
+    blocks_cta = [{"block_type": "text", "text": "This is a post. Buy now!"}]
     scores_cta = calculate_engagement_scores(
         metadata={"content_type": "Promotional"}, 
         linguistic={}, 
         visual={}, 
-        blocks=blocks
+        blocks=blocks_cta
     )
     
     assert scores_cta["cta_score"] > scores_no_cta["cta_score"]
