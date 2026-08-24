@@ -12,6 +12,7 @@ from app.profiling.metadata import generate_metadata_profile
 from app.profiling.linguistic import calculate_linguistic_features
 from app.profiling.visual import generate_visual_profile
 from app.profiling.engagement import calculate_engagement_scores
+from app.agents.recommendation_agent import generate_final_recommendations
 
 def update_run_stage(db: Session, document_id: uuid.UUID, stage: str, status: str, message: str = None):
     run = ProcessingRun(
@@ -121,10 +122,47 @@ def run_pipeline(temp_file_path: str, document_id: uuid.UUID):
         document.status = "GENERATING_RECOMMENDATIONS"
         db.commit()
 
-        # TODO: Implement Rule-based Recommendations & Gemini Enhancement
+        # --- PHASE 4: RECOMMENDATION INTELLIGENCE ---
+        # Note: Rule vs AI stages are handled inside the agent to allow fallback
+        update_run_stage(db, document_id, "RULE_RECOMMENDATIONS", "STARTED")
+        final_recs = generate_final_recommendations(
+            metadata=metadata_profile_data,
+            linguistic=linguistic_profile_data,
+            visual=visual_profile_data,
+            scores=scores,
+            evidence=scores.get("evidence", []),
+            blocks=blocks
+        )
+        
+        # Check if AI was used by looking for source='gemini' or 'hybrid'
+        ai_used = any(r.get("source") in ("gemini", "hybrid") for r in final_recs)
+        if ai_used:
+            update_run_stage(db, document_id, "AI_RECOMMENDATIONS", "COMPLETED")
+            update_run_stage(db, document_id, "CRITIC_VALIDATION", "COMPLETED")
+        else:
+            update_run_stage(db, document_id, "AI_UNAVAILABLE", "COMPLETED")
+
+        # Persist recommendations
+        from app.models.database import Recommendation
+        for rec in final_recs:
+            db_rec = Recommendation(
+                document_id=document.id,
+                category=rec["category"],
+                source=rec["source"],
+                priority=rec["priority"],
+                problem=rec["problem"],
+                evidence=rec["evidence"],
+                recommendation=rec["recommendation"],
+                rewrite=rec.get("rewrite"),
+                confidence=rec["confidence"],
+                supported=rec["supported"]
+            )
+            db.add(db_rec)
+            
         update_run_stage(db, document_id, "GENERATING_RECOMMENDATIONS", "COMPLETED")
 
         # Finally, completed
+        update_run_stage(db, document_id, "FINALIZING", "COMPLETED")
         document.status = "COMPLETED"
         document.processing_time_ms = int((time.time() - start_time) * 1000)
         db.commit()

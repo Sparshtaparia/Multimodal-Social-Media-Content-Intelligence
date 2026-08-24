@@ -144,3 +144,24 @@ class EngagementScore(Base):
 
     document = relationship("Document", back_populates="engagement_score")
 
+
+class Recommendation(Base):
+    __tablename__ = "recommendations"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey('documents.id', ondelete='CASCADE'))
+    
+    category = Column(String, nullable=False)
+    source = Column(String, nullable=False)
+    priority = Column(String, nullable=False)
+    problem = Column(String, nullable=False)
+    evidence = Column(String, nullable=False)
+    recommendation = Column(String, nullable=False)
+    rewrite = Column(String)
+    confidence = Column(Float, nullable=False)
+    supported = Column(Boolean, nullable=False, default=True)
+    
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    
+    document = relationship("Document", back_populates="recommendations")
+
