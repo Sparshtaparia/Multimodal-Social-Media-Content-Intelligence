@@ -139,13 +139,11 @@ def run_pipeline(temp_file_path: str, document_id: uuid.UUID):
             blocks=blocks
         )
         
-        # Check if AI was used by looking for source='gemini' or 'hybrid'
+        # We assume AI was successful if the process reached here without crashing in generate_final_recommendations
+        # In a real app we might want a distinct boolean flag from generate_final_recommendations
         ai_used = any(r.get("source") in ("gemini", "hybrid") for r in final_recs)
-        if ai_used:
-            update_run_stage(db, document_id, "AI_RECOMMENDATIONS", "COMPLETED")
-            update_run_stage(db, document_id, "CRITIC_VALIDATION", "COMPLETED")
-        else:
-            update_run_stage(db, document_id, "AI_UNAVAILABLE", "COMPLETED")
+        update_run_stage(db, document_id, "AI_RECOMMENDATIONS", "COMPLETED" if ai_used else "UNAVAILABLE")
+        update_run_stage(db, document_id, "CRITIC_VALIDATION", "COMPLETED")
 
         # Persist recommendations
         from app.models.database import Recommendation
@@ -175,6 +173,7 @@ def run_pipeline(temp_file_path: str, document_id: uuid.UUID):
         db.commit()
 
     except Exception as e:
+        db.rollback()
         error_msg = str(e)
         document.status = "FAILED"
         update_run_stage(db, document_id, "ERROR", "FAILED", error_msg)

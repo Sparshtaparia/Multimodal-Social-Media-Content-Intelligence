@@ -33,6 +33,18 @@ def process_document(file_path: str, file_type: str) -> Tuple[List[Dict[str, Any
         # Ensure it's in a format Tesseract likes
         if img.mode != 'RGB':
             img = img.convert('RGB')
-        return process_images_ocr([img])
+        blocks, metadata = process_images_ocr([img])
+        # Add image block spanning the full image
+        blocks.insert(0, {
+            "page_number": 1,
+            "block_type": "image",
+            "text": None,
+            "bbox": [0, 0, img.width, img.height],
+            "confidence": 1.0,
+            "source": "uploaded_image"
+        })
+        metadata["page_width"] = img.width
+        metadata["page_height"] = img.height
+        return blocks, metadata
 
 import io # needed for the Image.open(io.BytesIO) above

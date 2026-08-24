@@ -89,7 +89,7 @@ async def analyze_file(
     )
 
 @router.get("/analysis/{analysis_id}")
-def get_analysis(analysis_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_analysis(analysis_id: uuid.UUID, db: Session = Depends(get_db)) -> dict: # We return dict but will be cast to Any or AnalysisResultSchema ideally
     document = db.query(Document).filter(Document.id == analysis_id).first()
     if not document:
         raise HTTPException(status_code=404, detail="Analysis not found")
@@ -118,6 +118,7 @@ def get_analysis(analysis_id: uuid.UUID, db: Session = Depends(get_db)):
             "page_number": b.page_number,
             "block_type": b.block_type,
             "text": b.text,
+            "bbox": b.bbox,
             "confidence": b.confidence,
             "source": b.source
         })

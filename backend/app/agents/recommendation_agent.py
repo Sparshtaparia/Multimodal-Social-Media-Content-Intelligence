@@ -23,7 +23,7 @@ def deduplicate_and_rank(
         category = rule["category"].lower()
         
         # Check if AI has a corresponding recommendation
-        matching_ai = [a for a in ai_recs if a["supported"] and a["category"].lower() in category or category in a["category"].lower()]
+        matching_ai = [a for a in ai_recs if a["supported"] and (a["category"].lower() in category or category in a["category"].lower())]
         
         if matching_ai:
             best_ai = matching_ai[0]
@@ -32,6 +32,13 @@ def deduplicate_and_rank(
             hybrid["recommendation"] = f"{rule['recommendation']} AI Insight: {best_ai['recommendation']}"
             hybrid["rewrite"] = best_ai.get("rewrite")
             hybrid["confidence"] = max(rule["confidence"], best_ai["confidence"])
+            
+            # Add Gemini evidence explicitly so it is saved in DB
+            gemini_ev = best_ai.get("evidence", "")
+            if gemini_ev:
+                if "evidence_json" not in hybrid:
+                    hybrid["evidence_json"] = []
+                hybrid["evidence_json"].append({"signal": "ai_evidence", "value": gemini_ev})
             
             # Mark this category as covered
             seen_categories.add(best_ai["category"].lower())
@@ -42,6 +49,11 @@ def deduplicate_and_rank(
     # Add any leftover supported AI recs that didn't match a rule
     for ai in ai_recs:
         if ai["supported"] and ai["category"].lower() not in seen_categories:
+            gemini_ev = ai.get("evidence", "")
+            if gemini_ev:
+                if "evidence_json" not in ai:
+                    ai["evidence_json"] = []
+                ai["evidence_json"].append({"signal": "ai_evidence", "value": gemini_ev})
             final_recs.append(ai)
             seen_categories.add(ai["category"].lower())
             

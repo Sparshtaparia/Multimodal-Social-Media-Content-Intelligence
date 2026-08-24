@@ -128,10 +128,11 @@ def calculate_engagement_scores(metadata: Dict[str, Any], linguistic: Dict[str, 
         emotion_score += min(linguistic["exclamation_count"] * 10, 30)
         evidence.append({"signal": "exclamations", "value": linguistic["exclamation_count"], "impact": "positive", "scope": "document"})
         
-    sentiment = linguistic.get("sentiment_score", 0.0)
-    if abs(sentiment) > 0.5:
-        emotion_score += 30
-        evidence.append({"signal": "strong_sentiment", "value": sentiment, "impact": "positive", "scope": "document"})
+    # Removed placeholder sentiment logic as it is hardcoded to 0.0 currently
+    # sentiment = linguistic.get("sentiment_score", 0.0)
+    # if abs(sentiment) > 0.5:
+    #     emotion_score += 30
+    #     evidence.append({"signal": "strong_sentiment", "value": sentiment, "impact": "positive", "scope": "document"})
         
     emotion_score = max(0, min(100, emotion_score))
 

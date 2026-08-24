@@ -25,9 +25,12 @@ def extract_native_pdf(file_bytes: bytes) -> Tuple[List[Dict[str, Any]], Dict[st
     
     blocks = []
     page_count = len(doc)
+    max_w, max_h = 0, 0
     
     for page_num in range(page_count):
         page = doc[page_num]
+        max_w = max(max_w, page.rect.width)
+        max_h = max(max_h, page.rect.height)
         page_dict = page.get_text("dict")
         
         for block in page_dict.get("blocks", []):
@@ -44,7 +47,7 @@ def extract_native_pdf(file_bytes: bytes) -> Tuple[List[Dict[str, Any]], Dict[st
                         "block_type": "text",
                         "text": text_content,
                         "bbox": block.get("bbox"),  # [x0, y0, x1, y1]
-                        "confidence": 1.0,  # Native extraction is assumed 100% accurate for what's there
+                        "confidence": None,  # Native extraction confidence is not an OCR probability
                         "source": "native_pdf"
                     })
             elif block.get("type") == 1: # image block
@@ -53,14 +56,16 @@ def extract_native_pdf(file_bytes: bytes) -> Tuple[List[Dict[str, Any]], Dict[st
                     "block_type": "image",
                     "text": None,
                     "bbox": block.get("bbox"),
-                    "confidence": 1.0,
+                    "confidence": None,
                     "source": "native_pdf"
                 })
                 
     metadata = {
         "page_count": page_count,
         "ocr_used": False,
-        "extraction_method": "PyMuPDF"
+        "extraction_method": "PyMuPDF",
+        "page_width": max_w,
+        "page_height": max_h
     }
     
     return blocks, metadata
