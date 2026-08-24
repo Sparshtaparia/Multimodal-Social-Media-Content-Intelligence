@@ -85,6 +85,10 @@ Every recommendation and score is tied to exact evidence from the source file. T
 
 ## System Architecture
 
+<div align="center">
+  <img src="frontend/public/sysarch.png" alt="System Architecture" />
+</div>
+
 ```txt
 SocialLens: Content Intelligence Platform
 │
